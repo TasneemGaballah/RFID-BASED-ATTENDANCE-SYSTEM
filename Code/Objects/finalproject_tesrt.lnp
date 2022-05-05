@@ -1,0 +1,3 @@
+".\Objects\fitest.obj" 
+TO ".\Objects\finalproject_tesrt" 
+PRINT(".\Listings\finalproject_tesrt.m51") RAMSIZE(256) 

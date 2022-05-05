@@ -1,0 +1,211 @@
+C51 COMPILER V9.56.0.0   FITEST                                                            06/06/2021 12:26:29 PAGE 1   
+
+
+C51 COMPILER V9.56.0.0, COMPILATION OF MODULE FITEST
+OBJECT MODULE PLACED IN .\Objects\fitest.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE fitest.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\fi
+                    -test.lst) TABS(2) OBJECT(.\Objects\fitest.obj)
+
+line level    source
+
+   1          #include<reg51.h>
+   2          #include<string.h>
+   3          #include<stdio.h>
+   4          #define lcdport P2
+   5          
+   6          sbit en=P1^0;
+   7          sbit rs=P1^1;
+   8          sbit led=P1^2;
+   9          sbit m1=P3^2;
+  10          sbit m2=P3^3;
+  11          
+  12          char i;
+  13          char rfid[8],ch=0;
+  14          int count1, count2, count3;
+  15          unsigned char result[1];
+  16          
+  17           void delay(int itime)
+  18          {
+  19   1          int i,j;
+  20   1          for(i=0;i<itime;i++)
+  21   1          for(j=0;j<1275;j++);
+  22   1      }
+  23          
+  24          void daten()
+  25          {
+  26   1          rs=1;
+  27   1          
+  28   1          en=1;
+  29   1          delay(5);
+  30   1          en=0;
+  31   1      }
+  32          
+  33          void lcddata(unsigned char ch)
+  34          {
+  35   1          lcdport=ch & 0xf0;
+  36   1          daten();
+  37   1          lcdport=(ch<<4) & 0xf0;
+  38   1          daten();
+  39   1      }
+  40          
+  41          void cmden(void)
+  42          {
+  43   1          rs=0;
+  44   1          en=1;
+  45   1          delay(5);
+  46   1          en=0;
+  47   1      }
+  48          
+  49          void lcdcmd(unsigned char ch)
+  50          {
+  51   1          lcdport=ch & 0xf0;
+  52   1          cmden();
+  53   1          lcdport=(ch<<4) & 0xf0;
+  54   1          cmden();
+C51 COMPILER V9.56.0.0   FITEST                                                            06/06/2021 12:26:29 PAGE 2   
+
+  55   1      }
+  56          
+  57          void lcdstring(char *str)
+  58          {
+  59   1          while(*str)
+  60   1          {
+  61   2              lcddata(*str);
+  62   2              str++;
+  63   2          }
+  64   1      }
+  65          
+  66          void lcd_init(void)
+  67          {
+  68   1          lcdcmd(0x02);
+  69   1          lcdcmd(0x28);
+  70   1          lcdcmd(0x0e);
+  71   1          lcdcmd(0x01);
+  72   1      }
+  73          
+  74          void uart_init()
+  75          {
+  76   1       TMOD=0x20;
+  77   1       SCON=0x50;
+  78   1       TH1=0xfd;
+  79   1       TR1=1;
+  80   1      }
+  81          char rxdata()
+  82          {
+  83   1        while(!RI);
+  84   1          ch=SBUF;    
+  85   1          RI=0;
+  86   1          return ch;
+  87   1      }
+  88          void int_valied (){
+  89   1                  m1=1;
+  90   1                  m2=0;
+  91   1                  delay(300);
+  92   1                  m1=0;
+  93   1                  m2=1;
+  94   1                  delay(300);
+  95   1                  m1=0;
+  96   1                  m2=0;
+  97   1                  led=0;
+  98   1      }
+  99          void int_invalied (){
+ 100   1                  m1=0;
+ 101   1                  m2=0;
+ 102   1                  led=1;
+ 103   1                  delay(300);
+ 104   1                  led=0;
+ 105   1                   
+ 106   1                
+ 107   1      }
+ 108          void main()
+ 109          {
+ 110   1        char c;
+ 111   1          led=0;
+ 112   1          m1=0;
+ 113   1          m2=0;
+ 114   1          uart_init();
+ 115   1          lcd_init();
+ 116   1          lcdstring("  RFID Based    ");
+C51 COMPILER V9.56.0.0   FITEST                                                            06/06/2021 12:26:29 PAGE 3   
+
+ 117   1          lcdcmd(0xc0);
+ 118   1          lcdstring("Attendance Systm"); 
+ 119   1          delay(400);
+ 120   1          while(1)
+ 121   1          {
+ 122   2              lcdcmd(1);
+ 123   2              lcdstring("Place Your Card:");
+ 124   2              lcdcmd(0xc0);
+ 125   2              i=0;
+ 126   2            while( c=rxdata()){
+ 127   3              rfid[i++]=c;
+ 128   3            }
+ 129   2              lcdcmd(1);
+ 130   2              lcdstring("Your ID No. is:");
+ 131   2              lcdcmd(0xc0);
+ 132   2              i=0;
+ 133   2              while( rfid[i])
+ 134   2                lcddata(rfid[i++]);
+ 135   2              delay(100);
+ 136   2              if(strcmp(rfid,"69A5F5A2")==0)
+ 137   2              {
+ 138   3                  count1++;
+ 139   3                  lcdcmd(1);
+ 140   3                  lcdstring(" Attendance ");
+ 141   3                  lcdcmd(0xc0);
+ 142   3                  lcdstring(" Registered");
+ 143   3                  delay(200);
+ 144   3                  lcdcmd(1);
+ 145   3                  lcdstring(" Student1 ");
+ 146   3                  lcdcmd(0xc0);
+ 147   3                  lcdstring("Attnd. No.: ");
+ 148   3                  sprintf(result, "%d", count1);
+ 149   3                  lcdstring(result);
+ 150   3                  
+ 151   3                  int_valied ();
+ 152   3              }
+ 153   2              
+ 154   2              else if(strcmp(rfid,"ADDC5732")==0)
+ 155   2                  {
+ 156   3                  count2++;
+ 157   3                  lcdcmd(1);
+ 158   3                  lcdstring(" Attendance ");
+ 159   3                  lcdcmd(0xc0);
+ 160   3                  lcdstring(" Registered");
+ 161   3                  delay(200);
+ 162   3                  lcdcmd(1);
+ 163   3                  lcdstring(" Student2 ");
+ 164   3                  lcdcmd(0xc0);
+ 165   3                  lcdstring("Attnd. No.: ");
+ 166   3                  sprintf(result, "%d", count2);
+ 167   3                  lcdstring(result);
+ 168   3                  int_valied ();
+ 169   3            }
+ 170   2                  
+ 171   2      
+ 172   2              else 
+ 173   2              {
+ 174   3                 lcdcmd(1);
+ 175   3                 lcdstring("Invalid Card");
+ 176   3                 int_invalied ();
+ 177   3                 delay(300);
+ 178   3                
+C51 COMPILER V9.56.0.0   FITEST                                                            06/06/2021 12:26:29 PAGE 4   
+
+ 179   3              }
+ 180   2        }
+ 181   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    590    ----
+   CONSTANT SIZE    =    161    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     17       3
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
